@@ -9,13 +9,21 @@ class ApiConfig {
 
   /// Local dev port override:
   /// flutter run --dart-define=API_PORT=8081
-  static const port = String.fromEnvironment('API_PORT', defaultValue: '8080');
+  static const port = String.fromEnvironment('API_PORT', defaultValue: '8081');
+
+  /// Local dev host override (physical Android device — use your PC's LAN IP):
+  /// flutter run --dart-define=API_HOST=192.168.0.204 --dart-define=API_PORT=8081
+  static const hostOverride = String.fromEnvironment('API_HOST');
 
   static String get baseUrl {
+    return 'http://127.0.0.1:8081';
     if (baseUrlOverride.isNotEmpty) return baseUrlOverride;
 
     if (kIsWeb) return 'http://localhost:$port';
-    if (Platform.isAndroid) return 'http://10.0.2.2:$port';
+    if (Platform.isAndroid) {
+      final host = hostOverride.isNotEmpty ? hostOverride : 'http://192.168.0.204:8081';
+      return 'http://$host:$port';
+    }
     return 'http://127.0.0.1:$port';
   }
 }

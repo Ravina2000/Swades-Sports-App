@@ -1,13 +1,31 @@
+import 'dart:ffi';
 import 'dart:io';
 
+import 'package:sqlite3/open.dart';
 import 'package:sqlite3/sqlite3.dart';
 
 import 'seed.dart';
 
 class AppDatabase {
   AppDatabase({String? path}) {
+    _setupNativeLibrary();
     final dbPath = path ?? _defaultPath();
-    _db = sqlite3.open(dbPath);
+    try {
+      _db = sqlite3.open(dbPath);
+    } on Object catch (e) {
+      stderr.writeln('');
+      stderr.writeln('FATAL: could not open SQLite ($e).');
+      if (Platform.isWindows) {
+        stderr.writeln(
+          'On Windows the sqlite3 Dart package needs sqlite3.dll.\n'
+          '1. Download "Precompiled Binaries for Windows" (sqlite-dll-win-x64)\n'
+          '   from https://www.sqlite.org/download.html\n'
+          '2. Put sqlite3.dll inside the backend/ folder (next to pubspec.yaml)\n'
+          '3. Run again: dart run bin/server.dart',
+        );
+      }
+      rethrow;
+    }
     _configure();
     _migrate();
     seedIfEmpty(_db);
@@ -16,6 +34,25 @@ class AppDatabase {
   late final Database _db;
 
   Database get db => _db;
+
+  /// On Windows, look for sqlite3.dll next to the backend project so the
+  /// server runs without requiring the DLL on the global PATH.
+  static void _setupNativeLibrary() {
+    if (!Platform.isWindows) return;
+    open.overrideFor(OperatingSystem.windows, () {
+      final candidates = [
+        'sqlite3.dll',
+        '${Directory.current.path}${Platform.pathSeparator}sqlite3.dll',
+      ];
+      for (final candidate in candidates) {
+        try {
+          return DynamicLibrary.open(candidate);
+        } catch (_) {}
+      }
+      // Fall back to default lookup (PATH / system32).
+      return DynamicLibrary.open('sqlite3.dll');
+    });
+  }
 
   static String _defaultPath() {
     final envPath = Platform.environment['DB_PATH'];
@@ -29,6 +66,9 @@ class AppDatabase {
   void _configure() {
     _db.execute('PRAGMA journal_mode = WAL;');
     _db.execute('PRAGMA foreign_keys = ON;');
+    // Wait up to 3s on a locked database instead of failing instantly —
+    // relevant when two booking requests hit the same instant.
+    _db.execute('PRAGMA busy_timeout = 3000;');
   }
 
   void _migrate() {

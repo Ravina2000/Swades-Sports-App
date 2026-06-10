@@ -3,12 +3,30 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../cubits/venues/venues_cubit.dart';
 import '../cubits/venues/venues_state.dart';
+import '../utils/date_utils.dart';
 import '../widgets/async_state_view.dart';
 import '../widgets/venue_card.dart';
 import 'venue_detail_screen.dart';
 
-class VenuesScreen extends StatelessWidget {
+class VenuesScreen extends StatefulWidget {
   const VenuesScreen({super.key});
+
+  @override
+  State<VenuesScreen> createState() => _VenuesScreenState();
+}
+
+class _VenuesScreenState extends State<VenuesScreen> {
+  @override
+  void initState() {
+    super.initState();
+    // Defensive: if this screen is shown before anyone triggered load()
+    // (hot reload, navigation changes), kick it off instead of showing an
+    // endless spinner in the `initial` state.
+    final cubit = context.read<VenuesCubit>();
+    if (cubit.state.status == ViewStatus.initial) {
+      cubit.load();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
