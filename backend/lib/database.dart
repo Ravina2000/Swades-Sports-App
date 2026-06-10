@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:sqlite3/sqlite3.dart';
 
 import 'seed.dart';
@@ -16,8 +18,11 @@ class AppDatabase {
   Database get db => _db;
 
   static String _defaultPath() {
-    const envPath = String.fromEnvironment('DB_PATH');
-    if (envPath.isNotEmpty) return envPath;
+    final envPath = Platform.environment['DB_PATH'];
+    if (envPath != null && envPath.isNotEmpty) {
+      Directory(File(envPath).parent.path).createSync(recursive: true);
+      return envPath;
+    }
     return 'quickslot.db';
   }
 

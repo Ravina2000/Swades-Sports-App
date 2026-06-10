@@ -29,6 +29,10 @@ const _corsHeaders = {
 Handler createHandler(AppDatabase database) {
   final router = Router();
 
+  router.get('/health', (Request request) {
+    return Response.ok('ok');
+  });
+
   router.mount('/', venuesRouter(database.db));
   router.mount('/', bookingsRouter(database.db));
 
