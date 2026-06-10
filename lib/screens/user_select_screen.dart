@@ -5,8 +5,6 @@ import '../cubits/auth/auth_cubit.dart';
 import '../cubits/bookings/bookings_cubit.dart';
 import '../cubits/venues/venues_cubit.dart';
 import '../models/app_user.dart';
-import 'home_screen.dart';
-
 class UserSelectScreen extends StatelessWidget {
   const UserSelectScreen({super.key});
 
@@ -66,10 +64,6 @@ class UserSelectScreen extends StatelessWidget {
     context.read<AuthCubit>().selectUser(user);
     context.read<VenuesCubit>().load();
     context.read<BookingsCubit>().load(user.id);
-
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute<void>(builder: (_) => const HomeScreen()),
-    );
   }
 }
 

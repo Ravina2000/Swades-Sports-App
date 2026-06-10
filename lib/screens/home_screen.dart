@@ -4,7 +4,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../cubits/auth/auth_cubit.dart';
 import '../cubits/auth/auth_state.dart';
 import 'my_bookings_screen.dart';
-import 'user_select_screen.dart';
 import 'venues_screen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -21,7 +20,10 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget build(BuildContext context) {
     return BlocBuilder<AuthCubit, AuthState>(
       builder: (context, authState) {
-        final user = authState.user!;
+        final user = authState.user;
+        if (user == null) {
+          return const SizedBox.shrink();
+        }
 
         return Scaffold(
           appBar: AppBar(
@@ -73,8 +75,5 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _switchUser(BuildContext context) {
     context.read<AuthCubit>().logout();
-    Navigator.of(context).pushReplacement(
-      MaterialPageRoute<void>(builder: (_) => const UserSelectScreen()),
-    );
   }
 }

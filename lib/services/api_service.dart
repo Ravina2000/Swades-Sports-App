@@ -34,15 +34,15 @@ class ApiService {
       throw ApiException(
         0,
         'Server not responding at ${ApiConfig.baseUrl}. '
-        'Is the backend running? (cd backend && dart run bin/server.dart)',
+        'Check the backend is running and reachable.',
       );
     } on SocketException catch (e) {
       throw ApiException(
         0,
-        'Cannot reach ${ApiConfig.baseUrl} (${e.osError?.message ?? e.message}). '
-        'Check: backend running, correct host (emulator = 10.0.2.2, '
-        'physical device = your PC LAN IP via --dart-define=API_HOST=...), '
-        'and firewall allows port ${ApiConfig.port}.',
+        'Cannot reach ${ApiConfig.baseUrl} '
+        '(${e.osError?.message ?? e.message}). '
+        'Check your internet connection, or override the server with '
+        '--dart-define=API_BASE_URL=http://10.0.2.2:8081 for a local backend.',
       );
     } on http.ClientException catch (e) {
       throw ApiException(0, 'Network error: ${e.message}');
@@ -96,6 +96,14 @@ class ApiService {
       throw ApiException(
         409,
         body['message'] as String? ?? 'Slot already taken',
+        body: response.body,
+      );
+    }
+
+    if (response.statusCode == 301 || response.statusCode == 302) {
+      throw ApiException(
+        response.statusCode,
+        'API URL must use https:// for Railway (http:// breaks booking).',
         body: response.body,
       );
     }
